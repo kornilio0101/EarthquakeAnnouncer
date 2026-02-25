@@ -1,0 +1,31 @@
+// @see - https://www.electron.build/configuration/configuration
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.earthquake.announcer",
+  "asar": true,
+  "productName": "QuakeAnn",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist",
+    "dist-electron"
+  ],
+  "win": {
+    "target": [
+      "dir"
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false
+  },
+  "linux": {
+    "target": [
+      "AppImage"
+    ],
+    "artifactName": "${productName}-Linux-${version}.${ext}"
+  }
+}
