@@ -20,10 +20,12 @@ function createWindow() {
     height: 800,
     title: 'QuakeAnn - Real-time Earthquake Announcer',
     autoHideMenuBar: true,
+    icon: join(process.env.APP_ROOT, 'public/quakeann.ico'),
     webPreferences: {
       preload: join(__dirname, 'preload.mjs'),
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      backgroundThrottling: false
     },
   })
 

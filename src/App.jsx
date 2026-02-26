@@ -14,6 +14,12 @@ const App = () => {
     const isFirstFetch = useRef(true);
 
     useEffect(() => {
+        if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+    }, []);
+
+    useEffect(() => {
         const loadVoices = () => {
             const availableVoices = window.speechSynthesis.getVoices();
             console.log('Voices loaded:', availableVoices.length);
@@ -53,6 +59,15 @@ const App = () => {
             if (voice) message.voice = voice;
             message.rate = 0.9;
             window.speechSynthesis.speak(message);
+        }
+
+        // Native Desktop Notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('NEW EARTHQUAKE DETECTED', {
+                body: `Magnitude ${quake.mag.toFixed(1)} - ${quake.place}`,
+                icon: '/quakeann.ico',
+                tag: quake.id
+            });
         }
 
         setTimeout(() => setAnnouncedQuake(null), 8000);

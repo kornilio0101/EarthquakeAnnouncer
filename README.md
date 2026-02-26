@@ -1,18 +1,65 @@
-# Vue 3 + TypeScript + Vite
+# 🌋 QuakeAnn - Real-time Earthquake Announcer
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+QuakeAnn is a premium, real-time earthquake monitoring and announcement application. Built with a focus on speed, visibility, and accessibility, it syncs with global seismic networks to provide instant audio and visual alerts, even when running in the background.
 
-## Recommended IDE Setup
+![QuakeAnn Logo](public/quakeann.ico)
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+## ✨ Key Features
 
-## Type Support For `.vue` Imports in TS
+- **🌐 Global Monitoring**: Aggregates data from multiple seismic networks including USGS and JMA.
+- **🎙️ Voice Announcements**: High-quality Text-to-Speech (TTS) announcements for every detected event.
+- **📍 Google Maps Integration**: Click any earthquake item in the feed to open its exact location in Google Maps.
+- **🔔 Background Alerts**: Works seamlessly when minimized to the taskbar, utilizing native desktop notifications and audio alerts.
+- **🎚️ Live Filters**: Categorize and filter the live feed by magnitude and geographical region.
+- **💎 Premium UI**: A modern, glassmorphism-based interface with smooth animations powered by Framer Motion.
+- **📦 Versioned Builds**: Automated build system that organizes releases into version-specific folders.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+## 🚀 Getting Started
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+### Prerequisites
 
-1. Disable the built-in TypeScript Extension
-   1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-   2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [npm](https://www.npmjs.com/)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/kornilio0101/EarthquakeAnnouncer.git
+   cd EarthquakeAnnouncer
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### Development
+
+Run the application in development mode with hot-reloading:
+```bash
+npm run dev
+```
+
+### Building the App
+
+To generate a versioned production build:
+```bash
+npm run build
+```
+The build artifacts will be available in the `release/v<version>` directory.
+
+## 🛠️ Tech Stack
+
+- **Frontend**: [React](https://reactjs.org/) + [Vite](https://vitejs.dev/)
+- **Desktop**: [Electron](https://www.electronjs.org/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Voice**: Web Speech API (TTS)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+*Built for real-time awareness and safety.*
