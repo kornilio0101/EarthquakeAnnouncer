@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Activity, Settings, Filter, Globe, AlertTriangle, Clock } from 'lucide-react';
+import { Activity, Filter, Globe, Clock, AlertTriangle, ShieldCheck, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CONTINENTS, SOURCES, isWithinBounds, formatTime, getMagnitudeColorClass, getDistance } from './utils';
 
@@ -8,8 +8,70 @@ const App = () => {
     const [minMag, setMinMag] = useState(2.0);
     const [selectedContinent, setSelectedContinent] = useState('WORLDWIDE');
     const [loading, setLoading] = useState(true);
-    const [lastAnnouncedId, setLastAnnouncedId] = useState(null);
+    const announcedIds = useRef(new Set()); // Persistent set of IDs already announced
     const [announcedQuake, setAnnouncedQuake] = useState(null);
+    const [voices, setVoices] = useState([]);
+    const isFirstFetch = useRef(true);
+
+    useEffect(() => {
+        if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+    }, []);
+
+    useEffect(() => {
+        const loadVoices = () => {
+            const availableVoices = window.speechSynthesis.getVoices();
+            console.log('Voices loaded:', availableVoices.length);
+            setVoices(availableVoices);
+        };
+        loadVoices();
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+    }, []);
+
+    const triggerAnnouncement = useCallback((quake) => {
+        setAnnouncedQuake(quake);
+
+        // Sound alert
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.volume = 0.4;
+        audio.play().catch(e => console.error('Audio play failed:', e));
+
+        // Text-to-Speech (v2.0.0 Format)
+        if ('speechSynthesis' in window) {
+            const minutesAgo = Math.floor((Date.now() - quake.time) / 60000);
+            const timeStr = minutesAgo <= 0 ? "just now" : `${minutesAgo} minutes`;
+
+            // Extract "Country" or final region part (e.g., "Texas" from "Stanton, Texas")
+            const placeParts = quake.place.split(',');
+            const country = placeParts[placeParts.length - 1].trim();
+
+            const messageText = `Attention! Earthquake Magnitude ${quake.mag.toFixed(1)}. ${country}. ${timeStr} ago.`;
+
+            const message = new SpeechSynthesisUtterance(messageText);
+
+            const voice = voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en')) ||
+                voices.find(v => v.lang.startsWith('en')) ||
+                voices[0];
+
+            if (voice) message.voice = voice;
+            message.rate = 0.9;
+            window.speechSynthesis.speak(message);
+        }
+
+        // Native Desktop Notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('NEW EARTHQUAKE DETECTED', {
+                body: `Magnitude ${quake.mag.toFixed(1)} - ${quake.place}`,
+                icon: '/quakeann.ico',
+                tag: quake.id
+            });
+        }
+
+        setTimeout(() => setAnnouncedQuake(null), 8000);
+    }, [voices]);
 
     const fetchQuakes = useCallback(async () => {
         try {
@@ -80,35 +142,54 @@ const App = () => {
             setQuakes(finalEvents);
             setLoading(false);
 
-            // Announcement logic
-            if (finalEvents.length > 0) {
-                const topQuake = finalEvents[0];
-                const bounds = CONTINENTS[selectedContinent].bounds;
+            // Announcement logic: Announce ONLY new earthquakes
+            const bounds = CONTINENTS[selectedContinent].bounds;
+            const now = Date.now();
+            const MAX_AGE = 15 * 60 * 1000; // 15 minutes
 
-                if (topQuake.id !== lastAnnouncedId &&
-                    topQuake.mag >= minMag &&
-                    isWithinBounds(topQuake.lat, topQuake.lon, bounds)) {
+            const newQuakesToAnnounce = finalEvents.filter(q => {
+                // 1. Must meet filters
+                const meetsFilters = q.mag >= minMag && isWithinBounds(q.lat, q.lon, bounds);
+                if (!meetsFilters) return false;
 
-                    setLastAnnouncedId(topQuake.id);
-                    triggerAnnouncement(topQuake);
-                }
+                // 2. Must be recent (prevent "800 minutes ago" announcements)
+                if (now - q.time > MAX_AGE) return false;
+
+                // 3. Must not have been announced (Spatial-Temporal Check)
+                // We use a "Spatial Key" to handle cases where IDs change but it's the same quake
+                // Rounded to 0.5 degrees and 2-minute windows
+                const spatialKey = `${Math.round(q.lat * 2)}|${Math.round(q.lon * 2)}|${Math.floor(q.time / 120000)}|${q.mag.toFixed(1)}`;
+
+                if (announcedIds.current.has(q.id) || announcedIds.current.has(spatialKey)) return false;
+
+                q._spatialKey = spatialKey; // Temporary store for marking below
+                return true;
+            });
+
+            if (isFirstFetch.current) {
+                // On first load, mark all current quakes as "seen" to avoid announcing history
+                newQuakesToAnnounce.forEach(q => {
+                    announcedIds.current.add(q.id);
+                    if (q._spatialKey) announcedIds.current.add(q._spatialKey);
+                });
+                isFirstFetch.current = false;
+                return;
             }
+
+            newQuakesToAnnounce.reverse().forEach((q, index) => {
+                announcedIds.current.add(q.id);
+                if (q._spatialKey) announcedIds.current.add(q._spatialKey);
+                setTimeout(() => triggerAnnouncement(q), index * 4000);
+            });
+
         } catch (error) {
             console.error('Error fetching quakes:', error);
         }
-    }, [minMag, selectedContinent, lastAnnouncedId]);
-
-    const triggerAnnouncement = (quake) => {
-        setAnnouncedQuake(quake);
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        audio.volume = 0.5;
-        audio.play().catch(e => console.error('Audio play failed:', e));
-        setTimeout(() => setAnnouncedQuake(null), 10000);
-    };
+    }, [minMag, selectedContinent, triggerAnnouncement]);
 
     useEffect(() => {
         fetchQuakes();
-        const interval = setInterval(fetchQuakes, 45000); // Poll every 45 seconds due to more sources
+        const interval = setInterval(fetchQuakes, 10000); // Poll every 10 seconds due to more sources
         return () => clearInterval(interval);
     }, [fetchQuakes]);
 
@@ -164,11 +245,10 @@ const App = () => {
                     </select>
                 </div>
 
-                <div style={{ marginTop: 'auto' }}>
-                    <div className="glass-card" style={{ padding: '1rem', fontSize: '0.8rem' }}>
+                <div className="sidebar-footer">
+                    <div className="glass-card" style={{ padding: '0.8rem', fontSize: '0.75rem', textAlign: 'center' }}>
                         <p style={{ color: 'var(--text-secondary)' }}>
-                            Real-time monitoring active.
-                            Aggregating data from {Object.keys(SOURCES).length} networks.
+                            v2.0.0 Live Feed
                         </p>
                     </div>
                 </div>
@@ -185,21 +265,24 @@ const App = () => {
 
                 <AnimatePresence>
                     {announcedQuake && (
-                        <motion.div
+                        <motion.a
+                            href={`https://www.google.com/maps/search/?api=1&query=${announcedQuake.lat},${announcedQuake.lon}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             initial={{ opacity: 0, y: -20, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="glass-card announcing"
-                            style={{ marginBottom: '2rem', background: 'rgba(255, 62, 62, 0.1)' }}
+                            style={{ marginBottom: '2rem', background: 'rgba(255, 62, 62, 0.1)', display: 'block', textDecoration: 'none' }}
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <AlertTriangle color="#ff3e3e" size={32} />
                                 <div>
                                     <h3 style={{ color: '#ff3e3e' }}>NEW ACTIVITY DETECTED</h3>
-                                    <p>A magnitude {announcedQuake.mag} earthquake just occurred at {announcedQuake.place}</p>
+                                    <p style={{ color: 'var(--text-primary)' }}>A magnitude {announcedQuake.mag} earthquake just occurred at {announcedQuake.place}</p>
                                 </div>
                             </div>
-                        </motion.div>
+                        </motion.a>
                     )}
                 </AnimatePresence>
 
@@ -214,14 +297,18 @@ const App = () => {
                         </div>
                     ) : (
                         filteredQuakes.map(quake => (
-                            <motion.div
+                            <motion.a
                                 layout
                                 key={quake.id}
+                                href={`https://www.google.com/maps/search/?api=1&query=${quake.lat},${quake.lon}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="glass-card earthquake-item"
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
+                                style={{ textDecoration: 'none', color: 'inherit' }}
                             >
-                                <div className={`mag - badge ${getMagnitudeColorClass(quake.mag)} `}>
+                                <div className={`mag-badge ${getMagnitudeColorClass(quake.mag)}`}>
                                     {quake.mag.toFixed(1)}
                                 </div>
                                 <div className="item-info">
@@ -236,7 +323,7 @@ const App = () => {
                                 <div className="item-time">
                                     {formatTime(quake.time)}
                                 </div>
-                            </motion.div>
+                            </motion.a>
                         ))
                     )}
                 </div>

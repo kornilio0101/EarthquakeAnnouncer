@@ -12,16 +12,9 @@
     "dist-electron"
   ],
   "win": {
-    "target": [
-      "dir"
-    ]
+    "icon": "public/quakeann.ico"
   },
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
-  },
+
   "linux": {
     "target": [
       "AppImage"
