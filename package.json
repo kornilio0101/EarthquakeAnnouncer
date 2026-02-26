@@ -1,32 +1,31 @@
 {
-  "name": "earthquake-announcer",
-  "private": true,
-  "version": "2.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build && electron-builder",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@vitejs/plugin-react": "^5.1.4",
-    "canvas-confetti": "^1.9.4",
-    "framer-motion": "^12.34.3",
-    "lodash": "^4.17.23",
-    "lucide-react": "^0.575.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
-  },
-  "devDependencies": {
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "electron": "^30.0.1",
-    "electron-builder": "^24.13.3",
-    "electron-packager": "^17.1.2",
-    "typescript": "^5.2.2",
-    "vite": "^5.1.6",
-    "vite-plugin-electron": "^0.28.6",
-    "vite-plugin-electron-renderer": "^0.14.5"
-  },
-  "main": "dist-electron/main.js"
+    "name": "earthquake-announcer",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "node build.js",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@vitejs/plugin-react": "^5.1.4",
+        "canvas-confetti": "^1.9.4",
+        "framer-motion": "^12.34.3",
+        "lodash": "^4.17.23",
+        "lucide-react": "^0.575.0",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4"
+    },
+    "devDependencies": {
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.2.3",
+        "electron": "^30.0.1",
+        "electron-builder": "^24.13.3",
+        "typescript": "^5.2.2",
+        "vite": "^5.1.6",
+        "vite-plugin-electron": "^0.28.6",
+        "vite-plugin-electron-renderer": "^0.14.5"
+    },
+    "main": "dist-electron/main.js"
 }

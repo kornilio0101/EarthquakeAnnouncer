@@ -42,7 +42,7 @@ const App = () => {
             const placeParts = quake.place.split(',');
             const country = placeParts[placeParts.length - 1].trim();
 
-            const messageText = `Attention. Magnitude ${quake.mag.toFixed(1)}. ${country}. ${timeStr} before.`;
+            const messageText = `Attention! Earthquake Magnitude ${quake.mag.toFixed(1)}. ${country}. ${timeStr} ago.`;
 
             const message = new SpeechSynthesisUtterance(messageText);
 
@@ -174,7 +174,7 @@ const App = () => {
 
     useEffect(() => {
         fetchQuakes();
-        const interval = setInterval(fetchQuakes, 45000); // Poll every 45 seconds due to more sources
+        const interval = setInterval(fetchQuakes, 10000); // Poll every 10 seconds due to more sources
         return () => clearInterval(interval);
     }, [fetchQuakes]);
 
@@ -250,21 +250,24 @@ const App = () => {
 
                 <AnimatePresence>
                     {announcedQuake && (
-                        <motion.div
+                        <motion.a
+                            href={`https://www.google.com/maps/search/?api=1&query=${announcedQuake.lat},${announcedQuake.lon}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             initial={{ opacity: 0, y: -20, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="glass-card announcing"
-                            style={{ marginBottom: '2rem', background: 'rgba(255, 62, 62, 0.1)' }}
+                            style={{ marginBottom: '2rem', background: 'rgba(255, 62, 62, 0.1)', display: 'block', textDecoration: 'none' }}
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <AlertTriangle color="#ff3e3e" size={32} />
                                 <div>
                                     <h3 style={{ color: '#ff3e3e' }}>NEW ACTIVITY DETECTED</h3>
-                                    <p>A magnitude {announcedQuake.mag} earthquake just occurred at {announcedQuake.place}</p>
+                                    <p style={{ color: 'var(--text-primary)' }}>A magnitude {announcedQuake.mag} earthquake just occurred at {announcedQuake.place}</p>
                                 </div>
                             </div>
-                        </motion.div>
+                        </motion.a>
                     )}
                 </AnimatePresence>
 
@@ -279,14 +282,18 @@ const App = () => {
                         </div>
                     ) : (
                         filteredQuakes.map(quake => (
-                            <motion.div
+                            <motion.a
                                 layout
                                 key={quake.id}
+                                href={`https://www.google.com/maps/search/?api=1&query=${quake.lat},${quake.lon}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="glass-card earthquake-item"
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
+                                style={{ textDecoration: 'none', color: 'inherit' }}
                             >
-                                <div className={`mag - badge ${getMagnitudeColorClass(quake.mag)} `}>
+                                <div className={`mag-badge ${getMagnitudeColorClass(quake.mag)}`}>
                                     {quake.mag.toFixed(1)}
                                 </div>
                                 <div className="item-info">
@@ -301,7 +308,7 @@ const App = () => {
                                 <div className="item-time">
                                     {formatTime(quake.time)}
                                 </div>
-                            </motion.div>
+                            </motion.a>
                         ))
                     )}
                 </div>

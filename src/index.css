@@ -293,6 +293,7 @@ input[type="range"] {
     grid-template-columns: 80px 1fr 120px;
     align-items: center;
     gap: 1rem;
+    cursor: pointer;
 }
 
 .mag-badge {
