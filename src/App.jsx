@@ -3,6 +3,41 @@ import { Activity, Filter, Globe, Clock, AlertTriangle, ShieldCheck, Volume2 } f
 import { motion, AnimatePresence } from 'framer-motion';
 import { CONTINENTS, SOURCES, isWithinBounds, formatTime, getMagnitudeColorClass, getDistance } from './utils';
 
+const TRANSLATIONS = {
+    EN: {
+        attention: "Attention!",
+        earthquake: "Earthquake",
+        magnitude: "Magnitude",
+        justNow: "just now",
+        minutes: "minutes",
+        ago: "ago",
+        feedTitle: "Live Feed",
+        todayActivity: "Today's Activity",
+        minMag: "Min Magnitude",
+        region: "Region",
+        activityDetected: "NEW ACTIVITY DETECTED",
+        syncing: "Syncing with global sensors...",
+        noQuakes: "No earthquakes found matching filters.",
+        language: "Language"
+    },
+    EL: {
+        attention: "Προσοχή!",
+        earthquake: "Σεισμός",
+        magnitude: "Μέγεθος",
+        justNow: "μόλις τώρα",
+        minutes: "λεπτά",
+        ago: "πριν",
+        feedTitle: "Ζωντανή Ροή",
+        todayActivity: "Σημερινή Δραστηριότητα",
+        minMag: "Ελάχιστο Μέγεθος",
+        region: "Περιοχή",
+        activityDetected: "ΕΝΤΟΠΙΣΤΗΚΕ ΝΕΑ ΔΡΑΣΤΗΡΙΟΤΗΤΑ",
+        syncing: "Συγχρονισμός με παγκόσμιους αισθητήρες...",
+        noQuakes: "Δεν βρέθηκαν σεισμοί που να ταιριάζουν στα φίλτρα.",
+        language: "Γλώσσα"
+    }
+};
+
 const App = () => {
     const [quakes, setQuakes] = useState([]);
     const [minMag, setMinMag] = useState(2.0);
@@ -11,6 +46,7 @@ const App = () => {
     const announcedIds = useRef(new Set()); // Persistent set of IDs already announced
     const [announcedQuake, setAnnouncedQuake] = useState(null);
     const [voices, setVoices] = useState([]);
+    const [lang, setLang] = useState('EN');
     const isFirstFetch = useRef(true);
 
     useEffect(() => {
@@ -33,6 +69,7 @@ const App = () => {
 
     const triggerAnnouncement = useCallback((quake) => {
         setAnnouncedQuake(quake);
+        const t = TRANSLATIONS[lang];
 
         // Sound alert
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -42,19 +79,26 @@ const App = () => {
         // Text-to-Speech (v2.0.0 Format)
         if ('speechSynthesis' in window) {
             const minutesAgo = Math.floor((Date.now() - quake.time) / 60000);
-            const timeStr = minutesAgo <= 0 ? "just now" : `${minutesAgo} minutes`;
+            const timeStr = minutesAgo <= 0 ? t.justNow : `${minutesAgo} ${t.minutes}`;
 
             // Extract "Country" or final region part (e.g., "Texas" from "Stanton, Texas")
             const placeParts = quake.place.split(',');
             const country = placeParts[placeParts.length - 1].trim();
 
-            const messageText = `Attention! Earthquake Magnitude ${quake.mag.toFixed(1)}. ${country}. ${timeStr} ago.`;
+            const messageText = `${t.attention} ${t.earthquake} ${t.magnitude} ${quake.mag.toFixed(1)}. ${country}. ${timeStr} ${t.ago}.`;
 
             const message = new SpeechSynthesisUtterance(messageText);
 
-            const voice = voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en')) ||
-                voices.find(v => v.lang.startsWith('en')) ||
-                voices[0];
+            let voice;
+            if (lang === 'EL') {
+                voice = voices.find(v => v.lang.startsWith('el')) ||
+                    voices.find(v => v.lang.startsWith('en')) ||
+                    voices[0];
+            } else {
+                voice = voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en')) ||
+                    voices.find(v => v.lang.startsWith('en')) ||
+                    voices[0];
+            }
 
             if (voice) message.voice = voice;
             message.rate = 0.9;
@@ -63,15 +107,15 @@ const App = () => {
 
         // Native Desktop Notification
         if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('NEW EARTHQUAKE DETECTED', {
-                body: `Magnitude ${quake.mag.toFixed(1)} - ${quake.place}`,
+            new Notification(t.activityDetected, {
+                body: `${t.magnitude} ${quake.mag.toFixed(1)} - ${quake.place}`,
                 icon: '/quakeann.ico',
                 tag: quake.id
             });
         }
 
         setTimeout(() => setAnnouncedQuake(null), 8000);
-    }, [voices]);
+    }, [voices, lang]);
 
     const fetchQuakes = useCallback(async () => {
         try {
@@ -185,7 +229,7 @@ const App = () => {
         } catch (error) {
             console.error('Error fetching quakes:', error);
         }
-    }, [minMag, selectedContinent, triggerAnnouncement]);
+    }, [minMag, selectedContinent, triggerAnnouncement, lang]);
 
     useEffect(() => {
         fetchQuakes();
@@ -197,6 +241,8 @@ const App = () => {
         const bounds = CONTINENTS[selectedContinent].bounds;
         return q.mag >= minMag && isWithinBounds(q.lat, q.lon, bounds);
     });
+
+    const t = TRANSLATIONS[lang];
 
     return (
         <div className="layout glass">
@@ -217,8 +263,31 @@ const App = () => {
 
                 <div className="control-group">
                     <div className="control-label">
+                        <Volume2 size={14} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                        {t.language}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                            className={`glass-button ${lang === 'EN' ? 'active' : ''}`}
+                            style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem' }}
+                            onClick={() => setLang('EN')}
+                        >
+                            EN
+                        </button>
+                        <button
+                            className={`glass-button ${lang === 'EL' ? 'active' : ''}`}
+                            style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem' }}
+                            onClick={() => setLang('EL')}
+                        >
+                            GR
+                        </button>
+                    </div>
+                </div>
+
+                <div className="control-group">
+                    <div className="control-label">
                         <Filter size={14} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                        Min Magnitude: {minMag.toFixed(1)}
+                        {t.minMag}: {minMag.toFixed(1)}
                     </div>
                     <input
                         type="range"
@@ -233,7 +302,7 @@ const App = () => {
                 <div className="control-group">
                     <div className="control-label">
                         <Globe size={14} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                        Region
+                        {t.region}
                     </div>
                     <select
                         value={selectedContinent}
@@ -248,7 +317,7 @@ const App = () => {
                 <div className="sidebar-footer">
                     <div className="glass-card" style={{ padding: '0.8rem', fontSize: '0.75rem', textAlign: 'center' }}>
                         <p style={{ color: 'var(--text-secondary)' }}>
-                            v2.0.0 Live Feed
+                            v0.0.3 Live Feed
                         </p>
                     </div>
                 </div>
@@ -256,10 +325,10 @@ const App = () => {
 
             <div className="main-content">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                    <h2>Live <span className="accent-text">Feed</span></h2>
+                    <h2>{t.feedTitle.split(' ')[0]} <span className="accent-text">{t.feedTitle.split(' ')[1]}</span></h2>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                         <Clock size={16} />
-                        Today's Activity
+                        {t.todayActivity}
                     </div>
                 </div>
 
@@ -278,8 +347,8 @@ const App = () => {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <AlertTriangle color="#ff3e3e" size={32} />
                                 <div>
-                                    <h3 style={{ color: '#ff3e3e' }}>NEW ACTIVITY DETECTED</h3>
-                                    <p style={{ color: 'var(--text-primary)' }}>A magnitude {announcedQuake.mag} earthquake just occurred at {announcedQuake.place}</p>
+                                    <h3 style={{ color: '#ff3e3e' }}>{t.activityDetected}</h3>
+                                    <p style={{ color: 'var(--text-primary)' }}>{t.earthquake} {t.magnitude} {announcedQuake.mag} {t.ago} {announcedQuake.place}</p>
                                 </div>
                             </div>
                         </motion.a>
@@ -289,11 +358,11 @@ const App = () => {
                 <div className="earthquake-list">
                     {loading ? (
                         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                            Syncing with global sensors...
+                            {t.syncing}
                         </div>
                     ) : filteredQuakes.length === 0 ? (
                         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                            No earthquakes found matching filters.
+                            {t.noQuakes}
                         </div>
                     ) : (
                         filteredQuakes.map(quake => (
