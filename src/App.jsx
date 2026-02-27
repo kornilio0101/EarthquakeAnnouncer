@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Activity, Filter, Globe, Clock, AlertTriangle, ShieldCheck, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CONTINENTS, SOURCES, isWithinBounds, formatTime, getMagnitudeColorClass, getDistance } from './utils';
+import { CONTINENTS, SOURCES, isWithinBounds, formatTime, getMagnitudeColorClass, getDistance, US_STATES } from './utils';
 
 const TRANSLATIONS = {
     EN: {
@@ -83,7 +83,12 @@ const App = () => {
 
             // Extract "Country" or final region part (e.g., "Texas" from "Stanton, Texas")
             const placeParts = quake.place.split(',');
-            const country = placeParts[placeParts.length - 1].trim();
+            let country = placeParts[placeParts.length - 1].trim();
+
+            // Expand US State abbreviation if applicable
+            if (US_STATES[country.toUpperCase()]) {
+                country = US_STATES[country.toUpperCase()];
+            }
 
             const messageText = `${t.attention} ${t.earthquake} ${t.magnitude} ${quake.mag.toFixed(1)}. ${country}. ${timeStr} ${t.ago}.`;
 
@@ -182,7 +187,7 @@ const App = () => {
                 }
             });
 
-            const finalEvents = uniqueEvents.sort((a, b) => b.time - a.time);
+            const finalEvents = uniqueEvents.sort((a, b) => b.time - a.time).slice(0, 100);
             setQuakes(finalEvents);
             setLoading(false);
 
