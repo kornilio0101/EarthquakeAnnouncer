@@ -112,11 +112,17 @@ const App = () => {
 
         // Native Desktop Notification
         if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification(t.activityDetected, {
+            const notification = new Notification(t.activityDetected, {
                 body: `${t.magnitude} ${quake.mag.toFixed(1)} - ${quake.place}`,
                 icon: '/quakeann.ico',
                 tag: quake.id
             });
+
+            notification.onclick = () => {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('show-window');
+                window.focus();
+            };
         }
 
         setTimeout(() => setAnnouncedQuake(null), 8000);
