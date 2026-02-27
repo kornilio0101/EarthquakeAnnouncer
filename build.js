@@ -16,8 +16,8 @@ try {
 
     // 3. Run Electron Builder with output override
     console.log('\n--- Running Electron Builder ---');
-    // -c.directories.output overrides the config in electron-builder.json5
-    execSync(`npx electron-builder --win --dir -c.directories.output=${outputDir}`, { stdio: 'inherit' });
+    // --config.directories.output overrides the config in electron-builder.json5
+    execSync(`npx electron-builder --win --dir --config.directories.output=${outputDir}`, { stdio: 'inherit' });
 
     console.log(`\n✅ Build completed successfully! Check the ${outputDir} folder.\n`);
 } catch (error) {

@@ -34,7 +34,7 @@ The primary goal of QuakeAnn is to minimize the time between a seismic event det
 - **Regional Filtering**: Focus on specific continents or monitor the entire world.
 
 ### 🔔 Reliable Background Operation
-- **Minimized Awareness**: Explicitly configured to bypass Electron's background throttling. The app remains alive and active in the taskbar.
+- **Minimize to Tray**: Explicitly configured to bypass Electron's background throttling. The app minimizes to the system tray to keep your taskbar clean while remaining fully active.
 - **Native Notifications**: System-level toasts provide visual confirmation alongside audio alerts.
 
 ### 🎨 Premium Interface

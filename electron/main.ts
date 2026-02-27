@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 
 const require = createRequire(import.meta.url)
 const electron = require('electron')
-const { app, BrowserWindow } = electron
+const { app, BrowserWindow, Tray, Menu, nativeImage } = electron
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -14,8 +14,47 @@ process.env.APP_ROOT = join(__dirname, '..')
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 const RENDERER_DIST = join(process.env.APP_ROOT, 'dist')
 
+let tray: any = null
+let win: any = null
+
+function createTray() {
+  const iconPath = join(process.env.APP_ROOT, 'public/quakeann.ico')
+  const icon = nativeImage.createFromPath(iconPath)
+  tray = new Tray(icon)
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Restore',
+      click: () => {
+        if (win) {
+          win.show()
+          win.focus()
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        app.isQuitting = true
+        app.quit()
+      }
+    }
+  ])
+
+  tray.setToolTip('QuakeAnn - Earthquake Announcer')
+  tray.setContextMenu(contextMenu)
+
+  tray.on('double-click', () => {
+    if (win) {
+      win.show()
+      win.focus()
+    }
+  })
+}
+
 function createWindow() {
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1200,
     height: 800,
     title: 'QuakeAnn - Real-time Earthquake Announcer',
@@ -34,6 +73,20 @@ function createWindow() {
   } else {
     win.loadFile(join(RENDERER_DIST, 'index.html'))
   }
+
+  win.on('minimize', (event: any) => {
+    event.preventDefault()
+    win.hide()
+  })
+
+  // Ensure window is shown if it was hidden when normalized
+  win.on('restore', () => {
+    win.show()
+  })
+
+  if (!tray) {
+    createTray()
+  }
 }
 
 if (app) {
@@ -50,4 +103,8 @@ if (app) {
       createWindow()
     }
   })
+
+  // Prevent app from quitting when windows are closed if we want it to stay in tray
+  // However, the user specifically asked for minimize to tray.
+  // If they click the close button, it usually means quit unless specified otherwise.
 }
