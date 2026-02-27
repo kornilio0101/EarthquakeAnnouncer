@@ -26,6 +26,7 @@ The primary goal of QuakeAnn is to minimize the time between a seismic event det
 
 ### 🎙️ Intelligent Announcements
 - **Dynamic TTS**: Announces events in a clear, natural format: *"Attention - Magnitude - Location - Time ago"*.
+- **Multi-language Support**: Toggle between **English** and **Greek** on the fly. The announcement engine automatically adapts its template and voice selection to the chosen language.
 - **Audio Cues**: Chime alerts proceed every voice announcement to grab attention.
 - **Deduplication**: Proprietary logic prevents redundant alerts from multiple seismic sources for the same event.
 

@@ -4,7 +4,15 @@ import { dirname, join } from 'node:path'
 
 const require = createRequire(import.meta.url)
 const electron = require('electron')
-const { app, BrowserWindow, Tray, Menu, nativeImage } = electron
+const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } = electron
+// IPC handle to show/restore window
+ipcMain.on('show-window', () => {
+  if (win) {
+    win.show()
+    win.focus()
+  }
+})
+
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -90,6 +98,12 @@ function createWindow() {
 }
 
 if (app) {
+  app.name = 'Quake Announcer'
+  // Set App User Model ID for Windows notifications
+  if (process.platform === 'win32') {
+    app.setAppUserModelId('Quake Announcer')
+  }
+
   app.whenReady().then(createWindow)
 
   app.on('window-all-closed', () => {
