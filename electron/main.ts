@@ -13,6 +13,17 @@ ipcMain.on('show-window', () => {
   }
 })
 
+// IPC handle for login settings
+ipcMain.handle('get-login-settings', () => {
+  return app.getLoginItemSettings()
+})
+
+ipcMain.on('set-login-settings', (_event: any, settings: any) => {
+  app.setLoginItemSettings(settings)
+})
+
+const isHiddenStartup = process.argv.includes('--hidden')
+
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -80,6 +91,15 @@ function createWindow() {
     win.loadURL(VITE_DEV_SERVER_URL)
   } else {
     win.loadFile(join(RENDERER_DIST, 'index.html'))
+  }
+
+  // If started from Windows boot with --hidden, don't show the window
+  if (!isHiddenStartup) {
+    win.once('ready-to-show', () => {
+      win.show()
+    })
+  } else {
+    win.hide() // Ensure it's hidden if somehow it defaulted to visible
   }
 
   win.on('minimize', (event: any) => {

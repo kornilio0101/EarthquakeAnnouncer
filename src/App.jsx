@@ -18,7 +18,8 @@ const TRANSLATIONS = {
         activityDetected: "NEW ACTIVITY DETECTED",
         syncing: "Syncing with global sensors...",
         noQuakes: "No earthquakes found matching filters.",
-        language: "Language"
+        language: "Language",
+        startAtLogin: "Start with Windows"
     },
     EL: {
         attention: "Προσοχή!",
@@ -34,7 +35,8 @@ const TRANSLATIONS = {
         activityDetected: "ΕΝΤΟΠΙΣΤΗΚΕ ΝΕΑ ΔΡΑΣΤΗΡΙΟΤΗΤΑ",
         syncing: "Συγχρονισμός με παγκόσμιους αισθητήρες...",
         noQuakes: "Δεν βρέθηκαν σεισμοί που να ταιριάζουν στα φίλτρα.",
-        language: "Γλώσσα"
+        language: "Γλώσσα",
+        startAtLogin: "Εκκίνηση με τα Windows"
     }
 };
 
@@ -47,11 +49,20 @@ const App = () => {
     const [announcedQuake, setAnnouncedQuake] = useState(null);
     const [voices, setVoices] = useState([]);
     const [lang, setLang] = useState('EN');
+    const [startAtBoot, setStartAtBoot] = useState(false);
     const isFirstFetch = useRef(true);
 
     useEffect(() => {
         if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
             Notification.requestPermission();
+        }
+
+        // Initialize boot setting from Electron
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            ipcRenderer.invoke('get-login-settings').then(settings => {
+                setStartAtBoot(settings.openAtLogin);
+            });
         }
     }, []);
 
@@ -293,6 +304,32 @@ const App = () => {
                             GR
                         </button>
                     </div>
+                </div>
+
+                <div className="control-group">
+                    <div className="control-label">
+                        <ShieldCheck size={14} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                        {t.startAtLogin}
+                    </div>
+                    <button
+                        className={`glass-button ${startAtBoot ? 'active' : ''}`}
+                        style={{ padding: '0.4rem', fontSize: '0.8rem', justifyContent: 'flex-start' }}
+                        onClick={() => {
+                            const newValue = !startAtBoot;
+                            setStartAtBoot(newValue);
+                            if (window.require) {
+                                const { ipcRenderer } = window.require('electron');
+                                ipcRenderer.send('set-login-settings', {
+                                    openAtLogin: newValue,
+                                    path: process.execPath,
+                                    args: ['--hidden']
+                                });
+                            }
+                        }}
+                    >
+                        <div className={`status-dot ${startAtBoot ? 'pulsing' : ''}`} style={{ backgroundColor: startAtBoot ? '#10b981' : '#6b7280' }} />
+                        {startAtBoot ? 'ENABLED' : 'DISABLED'}
+                    </button>
                 </div>
 
                 <div className="control-group">
